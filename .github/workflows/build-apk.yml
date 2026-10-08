@@ -17,30 +17,34 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
 
       - name: Setup Java JDK
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Install dependencies & Build
+      - name: Prepare Web Assets & Capacitor
         run: |
-          if [ -f "package.json" ]; then
-            npm install --legacy-peer-deps
-            npm run build --if-present
+          if [ ! -f "package.json" ]; then
+            npm init -y
+          fi
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+
+          if grep -q '"build":' package.json 2>/dev/null; then
+            npm install --legacy-peer-deps || true
+            npm run build || true
           fi
 
-      - name: Setup Capacitor Configuration
-        run: |
-          WEB_DIR="."
+          WEB_DIR="www"
+          mkdir -p www
+
           if [ -d "dist" ]; then WEB_DIR="dist";
           elif [ -d "build" ]; then WEB_DIR="build";
-          elif [ -d "public" ]; then WEB_DIR="public";
+          else
+            cp -r *.html *.js *.css *.json www/ 2>/dev/null || true
           fi
-
-          npm install @capacitor/core @capacitor/cli @capacitor/android
 
           cat <<EOF > capacitor.config.json
           {
@@ -50,7 +54,7 @@ jobs:
           }
           EOF
 
-      - name: Add Android Platform & Sync
+      - name: Add Android & Sync
         run: |
           npx cap add android || true
           npx cap sync android
@@ -59,7 +63,7 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
