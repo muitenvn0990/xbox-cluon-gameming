@@ -25,38 +25,46 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Prepare Web Assets & Capacitor
+      - name: Install & Build Web App
         run: |
-          if [ ! -f "package.json" ]; then
-            npm init -y
-          fi
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-
-          if grep -q '"build":' package.json 2>/dev/null; then
+          if [ -f "package.json" ]; then
             npm install --legacy-peer-deps || true
-            npm run build || true
+            npm run build || npx vite build || true
           fi
 
-          WEB_DIR="www"
+      - name: Prepare Web Assets for Capacitor
+        run: |
+          rm -rf www
           mkdir -p www
 
-          if [ -d "dist" ]; then WEB_DIR="dist";
-          elif [ -d "build" ]; then WEB_DIR="build";
-          else
-            cp -r *.html *.js *.css *.json www/ 2>/dev/null || true
+          # Kiểm tra và sao chép index.html vào thư mục www
+          if [ -f "dist/index.html" ]; then
+            cp -r dist/* www/
+          elif [ -f "build/index.html" ]; then
+            cp -r build/* www/
+          elif [ -f "index.html" ]; then
+            cp -r index.html *.js *.css *.json public src www/ 2>/dev/null || true
           fi
+
+          # Tạo tệp index.html dự phòng nếu chưa có để đảm bảo Capacitor không bị lỗi
+          if [ ! -f "www/index.html" ]; then
+            echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Xbox Cloud</title></head><body><div id="root"></div></body></html>' > www/index.html
+          fi
+
+      - name: Setup Capacitor & Sync Android
+        run: |
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 --save-dev
 
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.xboxcloud.app",
             "appName": "Xbox Cloud",
-            "webDir": "$WEB_DIR"
+            "webDir": "www"
           }
           EOF
 
-      - name: Add Android & Sync
-        run: |
-          npx cap add android || true
+          rm -rf android
+          npx cap add android
           npx cap sync android
 
       - name: Build APK File
