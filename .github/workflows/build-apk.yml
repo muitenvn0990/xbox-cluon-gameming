@@ -25,11 +25,17 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Install & Build Web App
+      - name: Install Dependencies
         run: |
-          if [ -f "package.json" ]; then
-            npm install --legacy-peer-deps || true
-            npm run build || npx vite build || true
+          npm install --legacy-peer-deps
+
+      - name: Build Web Application
+        run: |
+          # Ép build xuất ra thư mục dist chuẩn
+          if [ -f "node_modules/.bin/vite" ]; then
+            npx vite build
+          else
+            npm run build
           fi
 
       - name: Prepare Web Assets for Capacitor
@@ -37,21 +43,15 @@ jobs:
           rm -rf www
           mkdir -p www
 
-          # Kiểm tra và sao chép index.html vào thư mục www
-          if [ -f "dist/index.html" ]; then
+          if [ -d "dist" ]; then
             cp -r dist/* www/
-          elif [ -f "build/index.html" ]; then
+          elif [ -d "build" ]; then
             cp -r build/* www/
-          elif [ -f "index.html" ]; then
-            cp -r index.html *.js *.css *.json public src www/ 2>/dev/null || true
+          else
+            cp -r *.html *.js *.css *.json public www/ 2>/dev/null || true
           fi
 
-          # Tạo tệp index.html dự phòng nếu chưa có để đảm bảo Capacitor không bị lỗi
-          if [ ! -f "www/index.html" ]; then
-            echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Xbox Cloud</title></head><body><div id="root"></div></body></html>' > www/index.html
-          fi
-
-      - name: Setup Capacitor & Sync Android
+      - name: Setup Capacitor & Build APK
         run: |
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 --save-dev
 
@@ -67,8 +67,6 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Build APK File
-        run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
