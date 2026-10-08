@@ -1,0 +1,67 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Install & Build Web
+        run: |
+          npm install
+          npm run build || true
+
+      - name: Setup Capacitor & Sync
+        run: |
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
+          
+          # Tự tạo file cấu hình Capacitor nếu trong repo chưa có
+          if [ ! -f "capacitor.config.json" ] && [ ! -f "capacitor.config.ts" ]; then
+            # Kiểm tra xem web build ra thư mục nào (dist hay www hay build)
+            WEB_DIR="dist"
+            if [ -d "www" ]; then WEB_DIR="www"; fi
+            if [ -d "build" ]; then WEB_DIR="build"; fi
+
+            cat <<EOF > capacitor.config.json
+            {
+              "appId": "com.aistudio.cloudplay",
+              "appName": "CloudPlay Switch",
+              "webDir": "$WEB_DIR"
+            }
+            EOF
+          fi
+
+          # Thêm platform Android và đồng bộ
+          npx cap add android || true
+          npx cap sync android
+
+      - name: Build Android APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CloudPlay-Switch-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
