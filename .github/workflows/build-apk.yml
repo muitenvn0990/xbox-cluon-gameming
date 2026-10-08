@@ -17,12 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
-
-      - name: Install dependencies & Build project
-        run: |
-          npm install
-          npm run build
+          node-version: 20
 
       - name: Setup Java JDK
         uses: actions/setup-java@v4
@@ -30,25 +25,44 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Setup Capacitor & Convert Web to Android App
+      - name: Install dependencies & Build
         run: |
+          if [ -f "package.json" ]; then
+            npm install --legacy-peer-deps
+            npm run build --if-present
+          fi
+
+      - name: Setup Capacitor Configuration
+        run: |
+          WEB_DIR="."
+          if [ -d "dist" ]; then WEB_DIR="dist";
+          elif [ -d "build" ]; then WEB_DIR="build";
+          elif [ -d "public" ]; then WEB_DIR="public";
+          fi
+
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          BUILD_DIR="dist"
-          if [ -d "build" ]; then BUILD_DIR="build"; fi
-          npx cap init "Xbox Cloud" "com.xboxcloud.app" --web-dir $BUILD_DIR
+
+          cat <<EOF > capacitor.config.json
+          {
+            "appId": "com.xboxcloud.app",
+            "appName": "Xbox Cloud",
+            "webDir": "$WEB_DIR",
+            "bundledWebRuntime": false
+          }
+          EOF
+
+      - name: Add Android Platform & Sync
+        run: |
           npx cap add android
           npx cap copy android
 
-      - name: Build APK file
+      - name: Build APK File
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      - name: Upload APK for download
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: xbox-cloud-app-debug.apk
