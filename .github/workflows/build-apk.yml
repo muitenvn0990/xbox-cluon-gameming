@@ -25,36 +25,45 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Install Dependencies
+      - name: Prepare Project & Install Dependencies
         run: |
-          npm install --legacy-peer-deps
-
-      - name: Build Web Application
-        run: |
-          # Ép build xuất ra thư mục dist chuẩn
-          if [ -f "node_modules/.bin/vite" ]; then
-            npx vite build
+          # 1. Tự động tạo package.json nếu kho chưa có
+          if [ ! -f "package.json" ]; then
+            echo "Kho chưa có package.json, tự động khởi tạo..."
+            npm init -y
           else
-            npm run build
+            npm install --legacy-peer-deps || true
+            npm run build || npx vite build || true
           fi
+
+          # 2. Cài đặt Capacitor
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 --save-dev
 
       - name: Prepare Web Assets for Capacitor
         run: |
           rm -rf www
           mkdir -p www
 
-          if [ -d "dist" ]; then
+          # 3. Sao chép toàn bộ mã nguồn web vào thư mục www
+          if [ -d "dist" ] && [ "$(ls -A dist)" ]; then
             cp -r dist/* www/
-          elif [ -d "build" ]; then
+          elif [ -d "build" ] && [ "$(ls -A build)" ]; then
             cp -r build/* www/
           else
-            cp -r *.html *.js *.css *.json public www/ 2>/dev/null || true
+            cp -r * www/ 2>/dev/null || true
+            rm -rf www/node_modules www/android www/.git www/.github
+          fi
+
+          # 4. Tìm tệp index.html nếu nằm trong thư mục con
+          if [ ! -f "www/index.html" ]; then
+            INDEX_PATH=$(find . -maxdepth 3 -name "index.html" | head -n 1)
+            if [ -n "$INDEX_PATH" ]; then
+              cp "$INDEX_PATH" www/index.html
+            fi
           fi
 
       - name: Setup Capacitor & Build APK
         run: |
-          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 --save-dev
-
           cat <<EOF > capacitor.config.json
           {
             "appId": "com.xboxcloud.app",
