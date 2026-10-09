@@ -1,9 +1,9 @@
-name: Build APK
+name: Build APK for Community
 
 on:
   push:
     branches: [ "main", "master" ]
-  workflow_dispatch: # Cho phép bạn bấm nút Build thủ công trên GitHub
+  workflow_dispatch:
 
 jobs:
   build:
@@ -13,21 +13,20 @@ jobs:
     - name: Tải mã nguồn
       uses: actions/checkout@v4
 
-    - name: Cài đặt môi trường Java (JDK 17)
+    - name: Cài đặt Java 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: gradle
 
-    - name: Cấp quyền thực thi cho Gradle
-      run: chmod +x gradlew
+    - name: Khởi tạo Gradle
+      uses: gradle/actions/setup-gradle@v3
 
-    - name: Xuất file APK (Debug)
-      run: ./gradlew assembleDebug
+    - name: Xuất file APK (Dùng Gradle hệ thống)
+      run: gradle assembleDebug
 
     - name: Tải APK lên GitHub Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: app-debug-apk
+        name: Xbox-Cloud-Gaming-APK
         path: app/build/outputs/apk/debug/*.apk
