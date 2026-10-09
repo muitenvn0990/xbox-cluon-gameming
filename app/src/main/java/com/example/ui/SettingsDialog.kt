@@ -36,6 +36,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.example.data.POPULAR_XBOX_LANGUAGES
+import java.util.Locale
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -112,6 +120,111 @@ fun SettingsDialog(
                             contentDescription = "Close",
                             tint = TextSecondary
                         )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Section: Xbox Cloud Language (CRITICAL for user request)
+                Text(
+                    text = "NGÔN NGỮ HIỂN THỊ XBOX CLOUD",
+                    color = XboxNeonGreen,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Chọn tiếng Anh hoặc ngôn ngữ hệ thống thay vì bị ép đọc tiếng Nhật.",
+                    color = TextSecondary,
+                    fontSize = 11.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // System language toggle
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(
+                            1.dp,
+                            if (config.useSystemLanguage) XboxNeonGreen else XboxCardBorder,
+                            RoundedCornerShape(12.dp)
+                        )
+                        .clickable { SettingsRepository.updateUseSystemLanguage(true) },
+                    color = if (config.useSystemLanguage) XboxSurfaceVariant else Color.Transparent
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Language,
+                                    contentDescription = null,
+                                    tint = if (config.useSystemLanguage) XboxNeonGreen else TextSecondary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Theo ngôn ngữ hệ thống (Tự động fallback en-US)",
+                                    color = TextPrimary,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 12.sp
+                                )
+                            }
+                            Text(
+                                text = "Áp dụng: ${config.getEffectiveLocale()}",
+                                color = DirectCyan,
+                                fontSize = 10.sp
+                            )
+                        }
+                        if (config.useSystemLanguage) {
+                            Icon(Icons.Default.Check, contentDescription = null, tint = XboxNeonGreen, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Quick Language selection
+                listOf(
+                    Triple("en-US", "Tiếng Anh Mỹ (en-US) 🇺🇸", "English (US) - Khuyên dùng"),
+                    Triple("en-GB", "Tiếng Anh Anh (en-GB) 🇬🇧", "English (UK)"),
+                    Triple("ja-JP", "Tiếng Nhật (ja-JP) 🇯🇵", "日本語"),
+                    Triple("ko-KR", "Tiếng Hàn (ko-KR) 🇰🇷", "한국어")
+                ).forEach { (code, title, desc) ->
+                    val isSelected = !config.useSystemLanguage && config.customLocale.equals(code, ignoreCase = true)
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 3.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .border(
+                                1.dp,
+                                if (isSelected) XboxNeonGreen else XboxCardBorder.copy(alpha = 0.5f),
+                                RoundedCornerShape(10.dp)
+                            )
+                            .clickable { SettingsRepository.updateCustomLocale(code) },
+                        color = if (isSelected) XboxSurfaceVariant else Color.Transparent
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(text = title, color = TextPrimary, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                                Text(text = desc, color = TextSecondary, fontSize = 10.sp)
+                            }
+                            if (isSelected) {
+                                Icon(Icons.Default.Check, contentDescription = null, tint = XboxNeonGreen, modifier = Modifier.size(16.dp))
+                            }
+                        }
                     }
                 }
 

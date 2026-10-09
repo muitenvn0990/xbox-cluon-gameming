@@ -13,7 +13,8 @@ class XboxBridge(private val controller: StreamController) {
         fun getInjectionScript(
             clarityBoost: Boolean,
             targetCountry: String = "JP",
-            targetIp: String = "138.199.21.239"
+            targetIp: String = "138.199.21.239",
+            userLocale: String = "en-US"
         ): String {
             return """
                 (function() {
@@ -35,6 +36,12 @@ class XboxBridge(private val controller: StreamController) {
 
                     const targetCountry = "$targetCountry";
                     const bypassIp = "$targetIp";
+                    const preferredLocale = "$userLocale";
+
+                    // Set locale cookie to enforce user's selected language
+                    try {
+                        document.cookie = "MSPC-LOCALE=" + preferredLocale + ";domain=.xbox.com;path=/;max-age=31536000";
+                    } catch(e) {}
 
                     // ==========================================
                     // 1. Better-xCloud Smart Region Interceptor
@@ -55,12 +62,14 @@ class XboxBridge(private val controller: StreamController) {
                                     headers.set('X-Forwarded-For', bypassIp);
                                     headers.set('X-Client-IP', bypassIp);
                                     headers.set('X-Real-IP', bypassIp);
+                                    headers.set('Accept-Language', preferredLocale + ',en;q=0.9');
                                     init.headers = headers;
                                 } else if (request instanceof Request) {
                                     let headers = new Headers(request.headers);
                                     headers.set('X-Forwarded-For', bypassIp);
                                     headers.set('X-Client-IP', bypassIp);
                                     headers.set('X-Real-IP', bypassIp);
+                                    headers.set('Accept-Language', preferredLocale + ',en;q=0.9');
                                     request = new Request(request, { headers: headers });
                                 }
                             }
@@ -118,6 +127,7 @@ class XboxBridge(private val controller: StreamController) {
                                 try {
                                     this.setRequestHeader('X-Forwarded-For', bypassIp);
                                     this.setRequestHeader('X-Client-IP', bypassIp);
+                                    this.setRequestHeader('Accept-Language', preferredLocale + ',en;q=0.9');
                                 } catch(e) {}
                             }
                             return origXhrSend.apply(this, arguments);

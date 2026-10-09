@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.GameBookmark
 import com.example.data.GameFilterTab
 import com.example.data.GameLibraryRepository
+import com.example.ui.theme.CyberCyan
 import com.example.ui.theme.DirectCyan
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
@@ -104,61 +105,77 @@ fun GameLibraryScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Search Bar
+            // High-Tech Search Bar
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .height(52.dp)
                     .testTag("library_search_input"),
-                placeholder = { Text("Tìm kiếm game trong danh mục...", fontSize = 12.sp, color = TextSecondary) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(18.dp)) },
+                placeholder = { Text("Tìm kiếm game trong thư viện...", fontSize = 13.sp, color = TextSecondary) },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = null,
+                        tint = XboxNeonGreen,
+                        modifier = Modifier.size(20.dp)
+                    )
+                },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
                         IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Clear", tint = TextSecondary, modifier = Modifier.size(16.dp))
+                            Icon(
+                                Icons.Default.Clear,
+                                contentDescription = "Clear",
+                                tint = TextSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
                     }
                 },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = XboxNeonGreen,
                     unfocusedBorderColor = XboxCardBorder,
-                    focusedContainerColor = XboxSurfaceVariant,
-                    unfocusedContainerColor = XboxSurface
+                    focusedContainerColor = XboxSurfaceVariant.copy(alpha = 0.9f),
+                    unfocusedContainerColor = XboxSurface.copy(alpha = 0.8f)
                 ),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(14.dp),
                 singleLine = true
             )
 
-            // Category Tabs
+            // Category Tabs Carousel
             val filterOptions: List<Pair<GameFilterTab, String>> = listOf(
                 GameFilterTab.ALL to "Tất cả (${games.size})",
                 GameFilterTab.FREE_TO_PLAY to "Miễn phí (Free)",
-                GameFilterTab.TOUCH_FRIENDLY to "Hỗ trợ Touch",
+                GameFilterTab.TOUCH_FRIENDLY to "Hỗ trợ Cảm ứng",
                 GameFilterTab.GAME_PASS to "Xbox Game Pass"
             )
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(filterOptions) { (tab, label) ->
                     val isSelected = selectedTab == tab
                     Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = if (isSelected) XboxGreen else XboxSurfaceVariant,
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (isSelected) XboxGreen else XboxSurfaceVariant.copy(alpha = 0.8f),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            if (isSelected) XboxNeonGreen.copy(alpha = 0.6f) else XboxCardBorder
+                        ),
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(10.dp))
                             .clickable { selectedTab = tab }
                     ) {
                         Text(
                             text = label,
                             color = if (isSelected) Color.White else TextSecondary,
                             fontSize = 11.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
                         )
                     }
                 }
@@ -172,12 +189,28 @@ fun GameLibraryScreen(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "Không tìm thấy tựa game nào", color = TextSecondary, fontSize = 13.sp)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Gamepad,
+                            contentDescription = null,
+                            tint = TextSecondary.copy(alpha = 0.4f),
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Text(
+                            text = "Không tìm thấy tựa game nào phù hợp",
+                            color = TextSecondary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
-                    contentPadding = PaddingValues(bottom = 80.dp),
+                    contentPadding = PaddingValues(bottom = 85.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.weight(1f)
@@ -226,11 +259,11 @@ private fun LibraryGameCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(190.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .border(1.dp, XboxCardBorder, RoundedCornerShape(16.dp))
+            .height(200.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .border(1.dp, XboxCardBorder, RoundedCornerShape(18.dp))
             .clickable { onPlay() },
-        colors = CardDefaults.cardColors(containerColor = XboxSurface)
+        colors = CardDefaults.cardColors(containerColor = XboxSurface.copy(alpha = 0.95f))
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             if (game.drawableResId != null) {
@@ -251,18 +284,23 @@ private fun LibraryGameCard(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(imageVector = Icons.Default.Gamepad, contentDescription = null, tint = Color.White.copy(alpha = 0.5f), modifier = Modifier.size(48.dp))
+                    Icon(
+                        imageVector = Icons.Default.Gamepad,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.3f),
+                        modifier = Modifier.size(52.dp)
+                    )
                 }
             }
 
-            // Scrim
+            // High-Contrast Gradient Scrim
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            listOf(Color.Transparent, Color.Black.copy(alpha = 0.9f)),
-                            startY = 70f
+                            listOf(Color.Transparent, Color.Black.copy(alpha = 0.92f)),
+                            startY = 60f
                         )
                     )
             )
@@ -278,14 +316,15 @@ private fun LibraryGameCard(
             ) {
                 Surface(
                     shape = RoundedCornerShape(6.dp),
-                    color = Color.Black.copy(alpha = 0.6f)
+                    color = Color.Black.copy(alpha = 0.65f),
+                    border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f))
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = WarningAmber, modifier = Modifier.size(10.dp))
+                        Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = WarningAmber, modifier = Modifier.size(11.dp))
                         Text(text = game.rating, color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     }
                 }
@@ -293,32 +332,32 @@ private fun LibraryGameCard(
                 if (game.supportsTouch) {
                     Surface(
                         shape = CircleShape,
-                        color = Color.Black.copy(alpha = 0.6f)
+                        color = Color.Black.copy(alpha = 0.65f)
                     ) {
                         Icon(
                             imageVector = Icons.Default.TouchApp,
                             contentDescription = "Touch",
                             tint = DirectCyan,
                             modifier = Modifier
-                                .padding(4.dp)
-                                .size(12.dp)
+                                .padding(5.dp)
+                                .size(13.dp)
                         )
                     }
                 }
             }
 
-            // Bottom Info
+            // Bottom Info & Play Trigger
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(10.dp)
                     .align(Alignment.BottomStart),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 Text(
                     text = game.title,
                     color = Color.White,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.ExtraBold,
                     fontSize = 13.sp,
                     maxLines = 1
                 )
@@ -346,7 +385,7 @@ private fun LibraryGameCard(
                             tint = Color.White,
                             modifier = Modifier
                                 .padding(5.dp)
-                                .size(12.dp)
+                                .size(14.dp)
                         )
                     }
                 }
@@ -365,17 +404,30 @@ private fun AddGameDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Thêm Game Xbox Yêu Thích", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp) },
+        title = {
+            Text(
+                "Thêm Game Xbox Yêu Thích",
+                color = TextPrimary,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 17.sp
+            )
+        },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Dán tên game và link Xbox Cloud Gaming vào ô bên dưới:", color = TextSecondary, fontSize = 12.sp)
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    "Dán tên game và link Xbox Cloud Gaming vào ô bên dưới:",
+                    color = TextSecondary,
+                    fontSize = 12.sp
+                )
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
                     label = { Text("Tên Game") },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = XboxNeonGreen,
-                        unfocusedBorderColor = XboxCardBorder
+                        unfocusedBorderColor = XboxCardBorder,
+                        focusedContainerColor = XboxSurfaceVariant,
+                        unfocusedContainerColor = XboxSurface
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -385,7 +437,9 @@ private fun AddGameDialog(
                     label = { Text("Đường link Xbox Play") },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = XboxNeonGreen,
-                        unfocusedBorderColor = XboxCardBorder
+                        unfocusedBorderColor = XboxCardBorder,
+                        focusedContainerColor = XboxSurfaceVariant,
+                        unfocusedContainerColor = XboxSurface
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -397,7 +451,7 @@ private fun AddGameDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = XboxGreen),
                 enabled = title.isNotBlank() && url.isNotBlank()
             ) {
-                Text("Lưu & Chơi")
+                Text("Lưu & Chơi", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
@@ -405,6 +459,7 @@ private fun AddGameDialog(
                 Text("Hủy", color = TextSecondary)
             }
         },
-        containerColor = XboxSurface
+        containerColor = XboxSurface,
+        shape = RoundedCornerShape(18.dp)
     )
 }

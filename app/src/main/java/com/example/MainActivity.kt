@@ -118,7 +118,9 @@ fun MainContent(
                         if (VpnManager.state.value.mode == com.example.vpn.NetworkMode.DISCONNECTED) {
                             VpnManager.connect(context)
                         }
-                        currentScreen = AppScreen.Browser(url)
+                        val currentLocale = SettingsRepository.config.value.getEffectiveLocale()
+                        val finalUrl = SettingsRepository.formatXboxUrlWithLocale(url, currentLocale)
+                        currentScreen = AppScreen.Browser(finalUrl)
                     },
                     modifier = Modifier.fillMaxSize()
                 )

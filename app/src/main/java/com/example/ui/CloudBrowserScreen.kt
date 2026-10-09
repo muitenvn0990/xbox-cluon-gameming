@@ -146,9 +146,12 @@ fun CloudBrowserScreen(
                         }
                     }
 
+                    val effectiveLocale = config.getEffectiveLocale()
+
                     CookieManager.getInstance().let { cookieManager ->
                         cookieManager.setAcceptCookie(true)
                         cookieManager.setAcceptThirdPartyCookies(this, true)
+                        cookieManager.setCookie("https://www.xbox.com", "MSPC-LOCALE=$effectiveLocale; domain=.xbox.com; path=/")
                     }
 
                     // Add JavaScript bridge for stream / launch detection
@@ -157,7 +160,8 @@ fun CloudBrowserScreen(
                     val injectionScript = XboxBridge.getInjectionScript(
                         clarityBoost = config.clarityBoostEnabled,
                         targetCountry = vpnState.currentServer.countryCode,
-                        targetIp = vpnState.currentServer.ip
+                        targetIp = vpnState.currentServer.ip,
+                        userLocale = effectiveLocale
                     )
 
                     // Inject document start script if WebKit supports it
@@ -210,7 +214,12 @@ fun CloudBrowserScreen(
                         }
                     }
 
-                    loadUrl(initialUrl)
+                    val formattedInitialUrl = SettingsRepository.formatXboxUrlWithLocale(initialUrl, effectiveLocale)
+                    val customHeaders = mapOf(
+                        "Accept-Language" to "$effectiveLocale,en;q=0.9",
+                        "X-Edge-Shopping-Flag" to "0"
+                    )
+                    loadUrl(formattedInitialUrl, customHeaders)
                     webViewInstance = this
                 }
             },

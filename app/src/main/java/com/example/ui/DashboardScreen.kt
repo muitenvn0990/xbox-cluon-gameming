@@ -9,6 +9,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Gamepad
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
@@ -34,6 +37,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -62,7 +66,10 @@ import com.example.ui.tabs.SettingsScreen
 import com.example.ui.theme.DirectCyan
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
+import com.example.ui.theme.XboxCardBorder
 import com.example.ui.theme.XboxDark
+import com.example.ui.theme.XboxGlassBorder
+import com.example.ui.theme.XboxGlassSurface
 import com.example.ui.theme.XboxGreen
 import com.example.ui.theme.XboxNeonGreen
 import com.example.ui.theme.XboxSurface
@@ -116,111 +123,163 @@ fun DashboardScreen(
         modifier = modifier.testTag("dashboard_screen"),
         containerColor = XboxDark,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(XboxGreen),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Gamepad,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Column {
-                            Text(
-                                text = "CloudPlay Switcher",
-                                color = TextPrimary,
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 16.sp
-                            )
-                            Text(
-                                text = "Xbox Cloud Auto-Bypass",
-                                color = XboxNeonGreen,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = XboxSurface
-                )
-            )
-        },
-        bottomBar = {
-            NavigationBar(
-                containerColor = XboxSurface,
-                modifier = Modifier.testTag("bottom_navigation_bar")
+            Surface(
+                color = XboxSurface.copy(alpha = 0.95f),
+                border = androidx.compose.foundation.BorderStroke(0.5.dp, XboxCardBorder)
             ) {
-                NavigationBarItem(
-                    selected = currentTab == DashboardTab.HOME,
-                    onClick = { currentTab = DashboardTab.HOME },
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Trang Chủ") },
-                    label = { Text("Trang Chủ", fontSize = 10.sp, fontWeight = FontWeight.SemiBold) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color.Black,
-                        selectedTextColor = XboxNeonGreen,
-                        indicatorColor = XboxNeonGreen,
-                        unselectedIconColor = TextSecondary,
-                        unselectedTextColor = TextSecondary
-                    )
-                )
-
-                NavigationBarItem(
-                    selected = currentTab == DashboardTab.LIBRARY,
-                    onClick = { currentTab = DashboardTab.LIBRARY },
-                    icon = { Icon(Icons.Default.SportsEsports, contentDescription = "Thư Viện") },
-                    label = { Text("Thư Viện", fontSize = 10.sp, fontWeight = FontWeight.SemiBold) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color.Black,
-                        selectedTextColor = XboxNeonGreen,
-                        indicatorColor = XboxNeonGreen,
-                        unselectedIconColor = TextSecondary,
-                        unselectedTextColor = TextSecondary
-                    )
-                )
-
-                NavigationBarItem(
-                    selected = currentTab == DashboardTab.SERVERS,
-                    onClick = { currentTab = DashboardTab.SERVERS },
-                    icon = { Icon(Icons.Default.Speed, contentDescription = "Máy Chủ") },
-                    label = { Text("Máy Chủ", fontSize = 10.sp, fontWeight = FontWeight.SemiBold) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color.Black,
-                        selectedTextColor = XboxNeonGreen,
-                        indicatorColor = XboxNeonGreen,
-                        unselectedIconColor = TextSecondary,
-                        unselectedTextColor = TextSecondary
-                    )
-                )
-
-                NavigationBarItem(
-                    selected = currentTab == DashboardTab.SETTINGS,
-                    onClick = { currentTab = DashboardTab.SETTINGS },
-                    icon = { Icon(Icons.Default.Tune, contentDescription = "Cài Đặt") },
-                    label = { Text("Cài Đặt", fontSize = 10.sp, fontWeight = FontWeight.SemiBold) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color.Black,
-                        selectedTextColor = XboxNeonGreen,
-                        indicatorColor = XboxNeonGreen,
-                        unselectedIconColor = TextSecondary,
-                        unselectedTextColor = TextSecondary
+                CenterAlignedTopAppBar(
+                    title = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(
+                                        androidx.compose.ui.graphics.Brush.linearGradient(
+                                            listOf(XboxNeonGreen, XboxGreen)
+                                        )
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Gamepad,
+                                    contentDescription = null,
+                                    tint = Color.Black,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text = "CLOUDPLAY",
+                                    color = TextPrimary,
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 17.sp,
+                                    letterSpacing = 1.sp
+                                )
+                                Text(
+                                    text = "XBOX CLOUD BYPASS • 0 RELOAD",
+                                    color = XboxNeonGreen,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    letterSpacing = 0.5.sp
+                                )
+                            }
+                        }
+                    },
+                    actions = {
+                        Surface(
+                            modifier = Modifier
+                                .padding(end = 12.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .border(1.dp, XboxNeonGreen.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
+                                .clickable { currentTab = DashboardTab.SETTINGS }
+                                .testTag("topbar_language_button"),
+                            color = XboxSurfaceVariant.copy(alpha = 0.9f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(5.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Language,
+                                    contentDescription = "Ngôn ngữ",
+                                    tint = XboxNeonGreen,
+                                    modifier = Modifier.size(15.dp)
+                                )
+                                Text(
+                                    text = config.getEffectiveLocale(),
+                                    color = TextPrimary,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = Color.Transparent
                     )
                 )
             }
+        },
+        bottomBar = {
+            Surface(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                    .border(
+                        1.dp,
+                        XboxGlassBorder,
+                        RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+                    ),
+                color = XboxSurface.copy(alpha = 0.98f)
+            ) {
+                NavigationBar(
+                    containerColor = Color.Transparent,
+                    modifier = Modifier.testTag("bottom_navigation_bar")
+                ) {
+                    NavigationBarItem(
+                        selected = currentTab == DashboardTab.HOME,
+                        onClick = { currentTab = DashboardTab.HOME },
+                        icon = { Icon(Icons.Default.Home, contentDescription = "Trang Chủ") },
+                        label = { Text("Trang Chủ", fontSize = 10.sp, fontWeight = FontWeight.Bold) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = Color.Black,
+                            selectedTextColor = XboxNeonGreen,
+                            indicatorColor = XboxNeonGreen,
+                            unselectedIconColor = TextSecondary,
+                            unselectedTextColor = TextSecondary
+                        )
+                    )
+
+                    NavigationBarItem(
+                        selected = currentTab == DashboardTab.LIBRARY,
+                        onClick = { currentTab = DashboardTab.LIBRARY },
+                        icon = { Icon(Icons.Default.SportsEsports, contentDescription = "Thư Viện") },
+                        label = { Text("Thư Viện", fontSize = 10.sp, fontWeight = FontWeight.Bold) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = Color.Black,
+                            selectedTextColor = XboxNeonGreen,
+                            indicatorColor = XboxNeonGreen,
+                            unselectedIconColor = TextSecondary,
+                            unselectedTextColor = TextSecondary
+                        )
+                    )
+
+                    NavigationBarItem(
+                        selected = currentTab == DashboardTab.SERVERS,
+                        onClick = { currentTab = DashboardTab.SERVERS },
+                        icon = { Icon(Icons.Default.Speed, contentDescription = "Máy Chủ") },
+                        label = { Text("Máy Chủ", fontSize = 10.sp, fontWeight = FontWeight.Bold) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = Color.Black,
+                            selectedTextColor = XboxNeonGreen,
+                            indicatorColor = XboxNeonGreen,
+                            unselectedIconColor = TextSecondary,
+                            unselectedTextColor = TextSecondary
+                        )
+                    )
+
+                    NavigationBarItem(
+                        selected = currentTab == DashboardTab.SETTINGS,
+                        onClick = { currentTab = DashboardTab.SETTINGS },
+                        icon = { Icon(Icons.Default.Tune, contentDescription = "Cài Đặt") },
+                        label = { Text("Cài Đặt", fontSize = 10.sp, fontWeight = FontWeight.Bold) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = Color.Black,
+                            selectedTextColor = XboxNeonGreen,
+                            indicatorColor = XboxNeonGreen,
+                            unselectedIconColor = TextSecondary,
+                            unselectedTextColor = TextSecondary
+                        )
+                    )
+                }
+            }
         }
     ) { innerPadding ->
-        Box(
+        com.example.ui.components.CyberBackdrop(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -239,7 +298,7 @@ fun DashboardScreen(
                             onConnectVpn = { handleConnect() },
                             onDisconnectVpn = { VpnManager.disconnect(context) },
                             onSwitchEngine = { VpnManager.setEngine(it) },
-                            onLaunchGame = { onLaunchUrl(it) },
+                            onLaunchGame = { onLaunchUrl(SettingsRepository.formatXboxUrlWithLocale(it, config.getEffectiveLocale())) },
                             onOpenXboxCloud = { onLaunchUrl(config.targetRegionUrl) },
                             onNavigateToLibrary = { currentTab = DashboardTab.LIBRARY }
                         )
@@ -247,7 +306,7 @@ fun DashboardScreen(
                     DashboardTab.LIBRARY -> {
                         GameLibraryScreen(
                             games = allGames,
-                            onLaunchGame = { onLaunchUrl(it) }
+                            onLaunchGame = { onLaunchUrl(SettingsRepository.formatXboxUrlWithLocale(it, config.getEffectiveLocale())) }
                         )
                     }
                     DashboardTab.SERVERS -> {

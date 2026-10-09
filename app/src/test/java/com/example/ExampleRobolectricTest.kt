@@ -46,4 +46,27 @@ class ExampleRobolectricTest {
         assertEquals(true, controller.uiState.value.isGameActive)
         assertEquals("Fortnite", controller.uiState.value.gameTitle)
     }
+
+    @Test
+    fun `verify xbox locale parsing and fallback to en-US`() {
+        assertEquals("en-US", SettingsRepository.parseLocaleFromInput("xbox.com/en-US"))
+        assertEquals("en-US", SettingsRepository.parseLocaleFromInput("https://www.xbox.com/en-US/play"))
+        assertEquals("en-GB", SettingsRepository.parseLocaleFromInput("en-GB"))
+        assertEquals("ko-KR", SettingsRepository.parseLocaleFromInput("ko-KR"))
+        assertEquals("ja-JP", SettingsRepository.parseLocaleFromInput("ja-JP"))
+
+        // Format Xbox URLs with locale
+        val originalUrl = "https://www.xbox.com/ja-JP/play/games/forza"
+        val adaptedEn = SettingsRepository.formatXboxUrlWithLocale(originalUrl, "en-US")
+        assertEquals("https://www.xbox.com/en-US/play/games/forza", adaptedEn)
+
+        val noLocaleUrl = "https://www.xbox.com/play"
+        val adaptedKo = SettingsRepository.formatXboxUrlWithLocale(noLocaleUrl, "ko-KR")
+        assertEquals("https://www.xbox.com/ko-KR/play", adaptedKo)
+
+        // Custom locale configuration
+        SettingsRepository.updateCustomLocale("en-US")
+        assertEquals("en-US", SettingsRepository.config.value.getEffectiveLocale())
+        assertEquals("https://www.xbox.com/en-US/play", SettingsRepository.config.value.targetRegionUrl)
+    }
 }
