@@ -26,17 +26,36 @@ val POPULAR_XBOX_LANGUAGES = listOf(
     XboxLanguage("pl-PL", "Tiếng Ba Lan", "Polski", "🇵🇱")
 )
 
+enum class ClarityPreset(val displayName: String, val description: String) {
+    OFF("Tắt", "Hình ảnh nguyên bản không can thiệp"),
+    BALANCED("Cân Bằng", "Tăng nét nhẹ + 8% tương phản (Khuyên dùng)"),
+    ULTRA_SHARP("Ultra Sharp", "Làm nét cạnh tối đa cho game 3D/FPS"),
+    OLED_PUNCH("OLED Punch", "Màu sắc rực rỡ & độ sâu màu cho màn AMOLED/OLED")
+}
+
 data class AppConfig(
+    val smartVpnEnabled: Boolean = true, // Tự động kiểm tra IP & điều khiển bật/tắt thông minh
     val autoBypassEnabled: Boolean = true,
-    val autoBypassDelaySeconds: Int = 3,
+    val autoBypassDelaySeconds: Int = 2,
     val autoReconnectOnMenu: Boolean = true,
     val forceDesktopUserAgent: Boolean = true,
     val clarityBoostEnabled: Boolean = true,
+    val clarityPreset: ClarityPreset = ClarityPreset.BALANCED,
+    val maxBitrateMbps: Int = 15, // 1080p high bitrate stream
+    val antiAfkKeepAlive: Boolean = true, // Chống bị ngắt phiên AFK 15 phút
+    val inputPollingBoost: Boolean = true, // Tăng tần số lấy mẫu tay cầm 120Hz/240Hz
     val showFloatingHud: Boolean = true,
     val showVirtualController: Boolean = false,
     val useSystemLanguage: Boolean = true,
     val customLocale: String = "en-US",
-    val preferredServerId: String = "jp_tokyo_linode_1"
+    val preferredServerId: String = "jp_tokyo_linode_1",
+    // Cuộc Cách Mạng Hệ Thống 1.0 (System Revolution 1.0)
+    val systemRevolutionEnabled: Boolean = true,
+    val stealthHeadersEnabled: Boolean = true,
+    val autoHealingProxyMesh: Boolean = true,
+    val sdpBitrateBoostEnabled: Boolean = true,
+    val zeroDelayDirectHandshake: Boolean = true,
+    val antiJapaneseEnforcer: Boolean = true
 ) {
     val targetRegionUrl: String
         get() = "https://www.xbox.com/${getEffectiveLocale()}/play"
@@ -165,6 +184,10 @@ object SettingsRepository {
         )
     }
 
+    fun updateSmartVpnEnabled(enabled: Boolean) {
+        _config.value = _config.value.copy(smartVpnEnabled = enabled)
+    }
+
     fun updateAutoBypass(enabled: Boolean) {
         _config.value = _config.value.copy(autoBypassEnabled = enabled)
     }
@@ -181,8 +204,71 @@ object SettingsRepository {
         _config.value = _config.value.copy(clarityBoostEnabled = enabled)
     }
 
+    fun updateClarityPreset(preset: ClarityPreset) {
+        _config.value = _config.value.copy(clarityPreset = preset)
+    }
+
+    fun updateMaxBitrate(mbps: Int) {
+        _config.value = _config.value.copy(maxBitrateMbps = mbps)
+    }
+
+    fun updateAntiAfk(enabled: Boolean) {
+        _config.value = _config.value.copy(antiAfkKeepAlive = enabled)
+    }
+
+    fun updateInputPollingBoost(enabled: Boolean) {
+        _config.value = _config.value.copy(inputPollingBoost = enabled)
+    }
+
     fun updateShowVirtualController(enabled: Boolean) {
         _config.value = _config.value.copy(showVirtualController = enabled)
+    }
+
+    fun updateSystemRevolution(enabled: Boolean) {
+        _config.value = _config.value.copy(systemRevolutionEnabled = enabled)
+    }
+
+    fun updateStealthHeaders(enabled: Boolean) {
+        _config.value = _config.value.copy(stealthHeadersEnabled = enabled)
+    }
+
+    fun updateAutoHealingProxyMesh(enabled: Boolean) {
+        _config.value = _config.value.copy(autoHealingProxyMesh = enabled)
+    }
+
+    fun updateSdpBitrateBoost(enabled: Boolean) {
+        _config.value = _config.value.copy(sdpBitrateBoostEnabled = enabled)
+    }
+
+    fun updateZeroDelayDirectHandshake(enabled: Boolean) {
+        _config.value = _config.value.copy(zeroDelayDirectHandshake = enabled)
+    }
+
+    fun updateAntiJapaneseEnforcer(enabled: Boolean) {
+        _config.value = _config.value.copy(antiJapaneseEnforcer = enabled)
+    }
+
+    /**
+     * Cuộc Cách Mạng Hệ Thống 1.0: Tối ưu hóa toàn diện toàn bộ 5 tầng chỉ với 1 chạm.
+     */
+    fun optimizeEntireSystem() {
+        _config.value = _config.value.copy(
+            systemRevolutionEnabled = true,
+            stealthHeadersEnabled = true,
+            autoHealingProxyMesh = true,
+            sdpBitrateBoostEnabled = true,
+            zeroDelayDirectHandshake = true,
+            antiJapaneseEnforcer = true,
+            smartVpnEnabled = true,
+            autoBypassEnabled = true,
+            autoBypassDelaySeconds = 2,
+            forceDesktopUserAgent = true,
+            clarityBoostEnabled = true,
+            clarityPreset = ClarityPreset.BALANCED,
+            maxBitrateMbps = 15,
+            antiAfkKeepAlive = true,
+            inputPollingBoost = true
+        )
     }
 
     fun updateTargetRegionUrl(url: String) {

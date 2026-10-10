@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -145,6 +148,7 @@ fun ServersScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(top = 8.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
@@ -162,30 +166,37 @@ fun ServersScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "HỆ THỐNG MÁY CHỦ DỰ PHÒNG XBOX",
                                 color = XboxNeonGreen,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.sp
+                                letterSpacing = 1.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                             Text(
-                                text = "${allServers.size} Máy chủ Nhật Bản & Quốc Tế chất lượng cao",
+                                text = "${allServers.size} Máy chủ Nhật Bản & Quốc Tế",
                                 color = TextSecondary,
-                                fontSize = 12.sp
+                                fontSize = 12.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
+
+                        Spacer(modifier = Modifier.width(8.dp))
 
                         Surface(
                             shape = RoundedCornerShape(8.dp),
                             color = XboxGreen.copy(alpha = 0.2f)
                         ) {
                             Text(
-                                text = "Đang chọn: ${currentServer.flag} ${currentServer.name.take(12)}",
+                                text = "${currentServer.flag} ${currentServer.name.take(10)}",
                                 color = XboxNeonGreen,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
+                                maxLines = 1,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
@@ -194,49 +205,77 @@ fun ServersScreen(
                     // Action buttons row: Ping All + Refresh Live + Add Custom
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Button(
                             onClick = { testAllServers() },
                             enabled = !isTestingAll,
-                            modifier = Modifier.weight(1f).height(38.dp),
+                            modifier = Modifier
+                                .weight(1.1f)
+                                .defaultMinSize(minHeight = 38.dp),
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 4.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = XboxGreen),
                             shape = RoundedCornerShape(10.dp)
                         ) {
                             if (isTestingAll) {
                                 CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.White, strokeWidth = 2.dp)
                             } else {
-                                Icon(Icons.Default.NetworkCheck, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.NetworkCheck, contentDescription = null, modifier = Modifier.size(15.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("Kiểm tra Ping", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Text(
+                                    "Kiểm Tra Ping",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
                             }
                         }
 
                         Button(
                             onClick = { fetchFreshLiveProxies(selectedCategory) },
                             enabled = !isFetchingLive,
-                            modifier = Modifier.weight(1f).height(38.dp),
+                            modifier = Modifier
+                                .weight(1.1f)
+                                .defaultMinSize(minHeight = 38.dp),
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 4.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = XboxSurfaceVariant),
                             shape = RoundedCornerShape(10.dp)
                         ) {
                             if (isFetchingLive) {
                                 CircularProgressIndicator(modifier = Modifier.size(16.dp), color = DirectCyan, strokeWidth = 2.dp)
                             } else {
-                                Icon(Icons.Default.CloudDownload, contentDescription = null, tint = DirectCyan, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.CloudDownload, contentDescription = null, tint = DirectCyan, modifier = Modifier.size(15.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("Tải Proxy Sống", color = TextPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Text(
+                                    "Tải Proxy Sống",
+                                    color = TextPrimary,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
                             }
                         }
 
                         Button(
                             onClick = { showCustomDialog = true },
-                            modifier = Modifier.height(38.dp),
+                            modifier = Modifier
+                                .weight(0.7f)
+                                .defaultMinSize(minHeight = 38.dp),
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 4.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = XboxSurfaceVariant),
                             shape = RoundedCornerShape(10.dp)
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = null, tint = XboxNeonGreen, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Add, contentDescription = null, tint = XboxNeonGreen, modifier = Modifier.size(15.dp))
                             Spacer(modifier = Modifier.width(2.dp))
-                            Text("Thêm", color = XboxNeonGreen, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                "Thêm",
+                                color = XboxNeonGreen,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1
+                            )
                         }
                     }
                 }

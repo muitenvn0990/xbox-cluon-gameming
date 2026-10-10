@@ -123,7 +123,7 @@ object GeoIpDetector {
             }
             conn.disconnect()
         } catch (e: Exception) {
-            // Fallback: ipwho.is
+            // Fallback 1: ipwho.is
             try {
                 val url = URL("http://ipwho.is/")
                 val conn = (url.openConnection() as HttpURLConnection).apply {
@@ -152,7 +152,51 @@ object GeoIpDetector {
                 }
                 conn.disconnect()
             } catch (ignored: Exception) {
+                // Fallback 2: ipapi.co
+                try {
+                    val url = URL("https://ipapi.co/json/")
+                    val conn = (url.openConnection() as HttpURLConnection).apply {
+                        connectTimeout = 3000
+                        readTimeout = 3000
+                        requestMethod = "GET"
+                        setRequestProperty("User-Agent", "Mozilla/5.0")
+                    }
+                    if (conn.responseCode == 200) {
+                        val response = BufferedReader(InputStreamReader(conn.inputStream)).use { it.readText() }
+                        val json = JSONObject(response)
+                        val ip = json.optString("ip", "")
+                        val countryCode = json.optString("country_code", "VN").uppercase()
+                        val countryName = json.optString("country_name", getCountryDisplayName(countryCode))
+                        val city = json.optString("city", "")
+                        val isSupported = SUPPORTED_COUNTRIES.contains(countryCode)
+
+                        result = GeoIpResult(
+                            ip = ip,
+                            countryCode = countryCode,
+                            countryName = countryName,
+                            city = city,
+                            flagEmoji = getFlagEmoji(countryCode),
+                            isXboxSupported = isSupported
+                        )
+                    }
+                    conn.disconnect()
+                } catch (ignored2: Exception) {
+                }
             }
+        }
+
+        // If completely offline or DNS block, default to device locale country so user is never stuck
+        if (result == null) {
+            val localCountry = java.util.Locale.getDefault().country.ifBlank { "VN" }.uppercase()
+            val isSupported = SUPPORTED_COUNTRIES.contains(localCountry)
+            result = GeoIpResult(
+                ip = "127.0.0.1 (Mạng nội bộ)",
+                countryCode = localCountry,
+                countryName = getCountryDisplayName(localCountry),
+                city = "Thiết bị",
+                flagEmoji = getFlagEmoji(localCountry),
+                isXboxSupported = isSupported
+            )
         }
 
         _isChecking.value = false

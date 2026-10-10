@@ -17,12 +17,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Tune
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -77,6 +81,7 @@ fun SettingsScreen(
         mutableStateOf(if (config.useSystemLanguage) "xbox.com/en-US" else "xbox.com/${config.customLocale}")
     }
 
+    val context = LocalContext.current
     val systemLocale = remember { Locale.getDefault() }
     val resolvedSystemLocale = remember { SettingsRepository.resolveSystemXboxLocale() }
 
@@ -86,6 +91,86 @@ fun SettingsScreen(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Section 0: CUỘC CÁCH MẠNG HỆ THỐNG 1.0 (SYSTEM REVOLUTION 1.0)
+        item {
+            SettingsCard(title = "CUỘC CÁCH MẠNG HỆ THỐNG 1.0 (SYSTEM REVOLUTION)") {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = "Kiến trúc tối ưu siêu cấp 5 tầng: Vượt rào tàng hình, tự chữa lành proxy, mở khóa 1080p 60FPS, chuyển mạng trực tiếp không reload trang và chống ép tiếng Nhật.",
+                        color = TextSecondary,
+                        fontSize = 11.sp,
+                        lineHeight = 16.sp
+                    )
+
+                    // Master Optimization Button
+                    Button(
+                        onClick = {
+                            SettingsRepository.optimizeEntireSystem()
+                            VpnManager.checkCurrentIp()
+                            Toast.makeText(context, "⚡ Đã tối ưu hóa toàn bộ 5 tầng hệ thống thành công!", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = DirectCyan),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Default.RocketLaunch, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
+                            Text(
+                                text = "KÍCH HOẠT TỐI ƯU CÁCH MẠNG 1.0 (1 CHẠM)",
+                                color = Color.Black,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                letterSpacing = 0.5.sp
+                            )
+                        }
+                    }
+
+                    // Layer 1
+                    RevolutionToggleRow(
+                        title = "Tầng 1: Stealth Header Spoofing (X-Forwarded-For)",
+                        desc = "Mượn IP Tokyo/Osaka ngầm qua HTTP headers, qua mặt firewall Microsoft",
+                        checked = config.stealthHeadersEnabled,
+                        onCheckedChange = { SettingsRepository.updateStealthHeaders(it) }
+                    )
+
+                    // Layer 2
+                    RevolutionToggleRow(
+                        title = "Tầng 2: Mesh Proxy Auto-Healing",
+                        desc = "Tự động đổi node dự phòng khi proxy lag >150ms hoặc rớt mạng",
+                        checked = config.autoHealingProxyMesh,
+                        onCheckedChange = { SettingsRepository.updateAutoHealingProxyMesh(it) }
+                    )
+
+                    // Layer 3
+                    RevolutionToggleRow(
+                        title = "Tầng 3: WebRTC SDP Bitrate Booster (1080p 60FPS)",
+                        desc = "Mở khóa giới hạn băng thông 15Mbps và âm thanh Stereo Opus 128kbps",
+                        checked = config.sdpBitrateBoostEnabled,
+                        onCheckedChange = { SettingsRepository.updateSdpBitrateBoost(it) }
+                    )
+
+                    // Layer 4
+                    RevolutionToggleRow(
+                        title = "Tầng 4: Zero-Delay Direct Handshake",
+                        desc = "Ngắt VPN tức thì khi nhận luồng video, chuyển mạng ISP không gián đoạn",
+                        checked = config.zeroDelayDirectHandshake,
+                        onCheckedChange = { SettingsRepository.updateZeroDelayDirectHandshake(it) }
+                    )
+
+                    // Layer 5
+                    RevolutionToggleRow(
+                        title = "Tầng 5: Khóa Ngôn Ngữ Tuyệt Đối (Anti-Japanese Enforcer)",
+                        desc = "Ép hiển thị ${config.getEffectiveLocale()}, vĩnh viễn không bị ép tiếng Nhật khi mượn IP Tokyo",
+                        checked = config.antiJapaneseEnforcer,
+                        onCheckedChange = { SettingsRepository.updateAntiJapaneseEnforcer(it) }
+                    )
+                }
+            }
+        }
+
         // Section 1: Language Settings (CRITICAL for user request)
         item {
             SettingsCard(title = "NGÔN NGỮ HIỂN THỊ XBOX CLOUD") {
@@ -311,9 +396,29 @@ fun SettingsScreen(
             }
         }
 
-        // Section 2: Auto Bypass Logic
+        // Section 2: Smart VPN & Auto Bypass Logic
         item {
-            SettingsCard(title = "CƠ CHẾ TỰ ĐỘNG CHUYỂN MẠNG (ZERO RELOAD)") {
+            SettingsCard(title = "VPN THÔNG MINH (SMART VPN AUTO ON/OFF) & ZERO RELOAD") {
+                // Smart VPN Toggle
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = "Kích hoạt VPN Thông Minh (Auto On/Off)", color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Text(text = "Tự động phân tích IP người chơi: Tự bật VPN khi mở game nếu chưa hỗ trợ, tự tắt khi vào trận", color = TextSecondary, fontSize = 11.sp)
+                    }
+                    Switch(
+                        checked = config.smartVpnEnabled,
+                        onCheckedChange = { SettingsRepository.updateSmartVpnEnabled(it) },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color.Black, checkedTrackColor = XboxNeonGreen),
+                        modifier = Modifier.testTag("settings_switch_smart_vpn")
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -456,7 +561,32 @@ fun SettingsScreen(
             }
         }
 
-        item { Spacer(modifier = Modifier.height(80.dp)) }
+        item { Spacer(modifier = Modifier.height(28.dp)) }
+    }
+}
+
+@Composable
+private fun RevolutionToggleRow(
+    title: String,
+    desc: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text(text = desc, color = TextSecondary, fontSize = 10.sp)
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(checkedThumbColor = Color.Black, checkedTrackColor = DirectCyan)
+        )
     }
 }
 

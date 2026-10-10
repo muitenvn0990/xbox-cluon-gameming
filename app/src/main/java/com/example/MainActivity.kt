@@ -115,10 +115,19 @@ fun MainContent(
             is AppScreen.Dashboard -> {
                 DashboardScreen(
                     onLaunchUrl = { url ->
-                        if (VpnManager.state.value.mode == com.example.vpn.NetworkMode.DISCONNECTED) {
-                            VpnManager.connect(context)
+                        val config = SettingsRepository.config.value
+                        if (config.smartVpnEnabled) {
+                            if (VpnManager.needsVpnToPlay()) {
+                                VpnManager.autoTurnOnForLaunch(context)
+                            } else {
+                                VpnManager.ensureDirectNetwork()
+                            }
+                        } else {
+                            if (VpnManager.state.value.mode == com.example.vpn.NetworkMode.DISCONNECTED) {
+                                VpnManager.connect(context)
+                            }
                         }
-                        val currentLocale = SettingsRepository.config.value.getEffectiveLocale()
+                        val currentLocale = config.getEffectiveLocale()
                         val finalUrl = SettingsRepository.formatXboxUrlWithLocale(url, currentLocale)
                         currentScreen = AppScreen.Browser(finalUrl)
                     },

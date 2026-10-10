@@ -34,7 +34,8 @@ class ExampleRobolectricTest {
 
         val config = SettingsRepository.config.value
         assertTrue(config.autoBypassEnabled)
-        assertEquals(3, config.autoBypassDelaySeconds)
+        assertTrue(config.smartVpnEnabled)
+        assertEquals(2, config.autoBypassDelaySeconds)
     }
 
     @Test
@@ -45,6 +46,56 @@ class ExampleRobolectricTest {
         controller.onGameLaunchInitiated("Fortnite")
         assertEquals(true, controller.uiState.value.isGameActive)
         assertEquals("Fortnite", controller.uiState.value.gameTitle)
+    }
+
+    @Test
+    fun `verify smart vpn ip decision for unsupported and supported countries`() {
+        val vnGeo = com.example.vpn.GeoIpResult(
+            ip = "14.225.204.10",
+            countryCode = "VN",
+            countryName = "Việt Nam",
+            city = "Hanoi",
+            flagEmoji = "🇻🇳",
+            isXboxSupported = false
+        )
+        VpnManager.updateSmartDecision(vnGeo)
+        assertTrue("Vietnam player must need VPN", VpnManager.needsVpnToPlay())
+        assertEquals(true, VpnManager.state.value.smartDecision.needsVpn)
+
+        val usGeo = com.example.vpn.GeoIpResult(
+            ip = "20.150.10.5",
+            countryCode = "US",
+            countryName = "Hoa Kỳ (United States)",
+            city = "Seattle",
+            flagEmoji = "🇺🇸",
+            isXboxSupported = true
+        )
+        VpnManager.updateSmartDecision(usGeo)
+        assertEquals(false, VpnManager.needsVpnToPlay())
+        assertEquals(false, VpnManager.state.value.smartDecision.needsVpn)
+        assertEquals(com.example.vpn.SmartVpnPhase.DIRECT_SUPPORTED_REGION, VpnManager.state.value.smartVpnPhase)
+    }
+
+    @Test
+    fun `verify smart vpn lifecycle switch to direct network on stream connect`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val vnGeo = com.example.vpn.GeoIpResult(
+            ip = "14.225.204.10",
+            countryCode = "VN",
+            countryName = "Việt Nam",
+            city = "Hanoi",
+            flagEmoji = "🇻🇳",
+            isXboxSupported = false
+        )
+        VpnManager.updateSmartDecision(vnGeo)
+        VpnManager.autoTurnOnForLaunch(context)
+        assertEquals(NetworkMode.VPN_JAPAN, VpnManager.state.value.mode)
+        assertEquals(com.example.vpn.SmartVpnPhase.BYPASS_ACTIVE, VpnManager.state.value.smartVpnPhase)
+
+        // Stream connection switches to Direct ISP
+        VpnManager.switchToDirectNetwork(context, "WebRTC game stream connected")
+        assertEquals(NetworkMode.DIRECT_NETWORK, VpnManager.state.value.mode)
+        assertEquals(com.example.vpn.SmartVpnPhase.DIRECT_GAMING, VpnManager.state.value.smartVpnPhase)
     }
 
     @Test
@@ -68,5 +119,20 @@ class ExampleRobolectricTest {
         SettingsRepository.updateCustomLocale("en-US")
         assertEquals("en-US", SettingsRepository.config.value.getEffectiveLocale())
         assertEquals("https://www.xbox.com/en-US/play", SettingsRepository.config.value.targetRegionUrl)
+    }
+
+    @Test
+    fun `verify system revolution 1 0 optimization`() {
+        SettingsRepository.optimizeEntireSystem()
+        val config = SettingsRepository.config.value
+        assertTrue(config.systemRevolutionEnabled)
+        assertTrue(config.stealthHeadersEnabled)
+        assertTrue(config.autoHealingProxyMesh)
+        assertTrue(config.sdpBitrateBoostEnabled)
+        assertTrue(config.zeroDelayDirectHandshake)
+        assertTrue(config.antiJapaneseEnforcer)
+        assertTrue(config.smartVpnEnabled)
+        assertTrue(config.autoBypassEnabled)
+        assertEquals(15, config.maxBitrateMbps)
     }
 }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -100,18 +101,23 @@ fun FloatingHud(
     var offsetX by remember { mutableFloatStateOf(24f) }
     var offsetY by remember { mutableFloatStateOf(80f) }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
+    BoxWithConstraints(
+        modifier = modifier.fillMaxSize()
     ) {
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        val maxWidthPx = with(density) { maxWidth.toPx() }
+        val maxHeightPx = with(density) { maxHeight.toPx() }
+
         Surface(
             modifier = Modifier
                 .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
-                .pointerInput(Unit) {
+                .pointerInput(maxWidthPx, maxHeightPx) {
                     detectDragGestures { change, dragAmount ->
                         change.consume()
-                        offsetX += dragAmount.x
-                        offsetY += dragAmount.y
+                        val boundX = (maxWidthPx - 140f).coerceAtLeast(8f)
+                        val boundY = (maxHeightPx - 80f).coerceAtLeast(8f)
+                        offsetX = (offsetX + dragAmount.x).coerceIn(8f, boundX)
+                        offsetY = (offsetY + dragAmount.y).coerceIn(8f, boundY)
                     }
                 }
                 .clip(RoundedCornerShape(20.dp))

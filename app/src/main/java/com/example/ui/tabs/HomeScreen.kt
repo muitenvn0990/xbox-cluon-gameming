@@ -27,6 +27,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
@@ -35,6 +38,9 @@ import androidx.compose.material.icons.filled.Gamepad
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RocketLaunch
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Sync
@@ -50,7 +56,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import android.widget.Toast
+import com.example.data.SettingsRepository
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -88,6 +97,8 @@ import com.example.vpn.DEFAULT_SERVERS
 import com.example.vpn.GeoIpResult
 import com.example.vpn.NetworkMode
 import com.example.vpn.ServerLocation
+import com.example.vpn.SmartVpnDecision
+import com.example.vpn.SmartVpnPhase
 import com.example.vpn.VpnConnectionState
 import com.example.vpn.VpnEngine
 import com.example.vpn.VpnManager
@@ -107,6 +118,7 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    val config by SettingsRepository.config.collectAsState()
 
     Column(
         modifier = modifier
@@ -124,9 +136,21 @@ fun HomeScreen(
             onOpenXboxCloud = onOpenXboxCloud
         )
 
-        // 2. Real-time Live IP & Country Verification Radar
+        // 2. Cuộc Cách Mạng Hệ Thống 1.0 (System Revolution 1.0 Deck)
+        SystemRevolutionStatusCard(
+            config = config,
+            onOptimizeSystem = {
+                SettingsRepository.optimizeEntireSystem()
+                VpnManager.checkCurrentIp()
+                Toast.makeText(context, "⚡ Cuộc cách mạng hệ thống 1.0: Đã kích hoạt toàn bộ 5 tầng tối ưu!", Toast.LENGTH_SHORT).show()
+            }
+        )
+
+        // 3. Real-time Live IP & Country Verification Radar (Smart VPN Cockpit)
         LiveIpVerifierCard(
             geoIp = vpnState.detectedGeoIp,
+            smartDecision = vpnState.smartDecision,
+            smartPhase = vpnState.smartVpnPhase,
             currentServer = vpnState.currentServer,
             onRefreshIp = { VpnManager.checkCurrentIp() },
             onSwitchNextServer = { VpnManager.switchNextBackupServer(context) }
@@ -209,19 +233,243 @@ fun HomeScreen(
             mode = vpnState.mode
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(36.dp))
+    }
+}
+
+@Composable
+private fun SystemRevolutionStatusCard(
+    config: com.example.data.AppConfig,
+    onOptimizeSystem: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .border(
+                1.5.dp,
+                Brush.horizontalGradient(
+                    listOf(DirectCyan.copy(alpha = 0.8f), XboxNeonGreen.copy(alpha = 0.8f), DirectCyan.copy(alpha = 0.8f))
+                ),
+                RoundedCornerShape(20.dp)
+            )
+            .testTag("system_revolution_card"),
+        colors = CardDefaults.cardColors(containerColor = XboxSurface.copy(alpha = 0.95f))
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(DirectCyan.copy(alpha = 0.18f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = null,
+                            tint = DirectCyan,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "CUỘC CÁCH MẠNG HỆ THỐNG 1.0",
+                            color = DirectCyan,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 0.8.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = "Tối Ưu Siêu Cấp 5 Tầng • 0ms VPN Lag",
+                            color = TextSecondary,
+                            fontSize = 10.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = XboxNeonGreen.copy(alpha = 0.18f),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, XboxNeonGreen.copy(alpha = 0.4f))
+                ) {
+                    Text(
+                        text = "5/5 ACTIVE ⚡",
+                        color = XboxNeonGreen,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                    )
+                }
+            }
+
+            // 5-Layer Showcase Pills
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.Black.copy(alpha = 0.35f))
+                    .padding(10.dp),
+                verticalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                RevolutionLayerRow(
+                    layerNum = "1",
+                    title = "Stealth Header Spoofing",
+                    desc = "Vượt rào kiểm tra vùng Microsoft, mượn IP Tokyo ngầm",
+                    isActive = config.stealthHeadersEnabled
+                )
+                RevolutionLayerRow(
+                    layerNum = "2",
+                    title = "Mesh Proxy Auto-Healing",
+                    desc = "Tự động đổi node dự phòng trong 300ms nếu trễ >150ms",
+                    isActive = config.autoHealingProxyMesh
+                )
+                RevolutionLayerRow(
+                    layerNum = "3",
+                    title = "WebRTC SDP Bitrate Booster",
+                    desc = "Mở khóa 1080p 60FPS / 15Mbps, âm thanh Stereo 128k",
+                    isActive = config.sdpBitrateBoostEnabled
+                )
+                RevolutionLayerRow(
+                    layerNum = "4",
+                    title = "Zero-Reload Direct Handshake",
+                    desc = "Tắt VPN ngay khi vào trận, trả về mạng Viettel/VNPT/FPT",
+                    isActive = config.zeroDelayDirectHandshake
+                )
+                RevolutionLayerRow(
+                    layerNum = "5",
+                    title = "Anti-Japanese Enforcer",
+                    desc = "Ép hiển thị ${config.getEffectiveLocale()}, không bị ép tiếng Nhật",
+                    isActive = config.antiJapaneseEnforcer
+                )
+            }
+
+            // One-Tap Quick Optimize Button
+            Button(
+                onClick = onOptimizeSystem,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 42.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = DirectCyan
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.RocketLaunch,
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = "KÍCH HOẠT TỐI ƯU CÁCH MẠNG 1.0 (1 CHẠM)",
+                        color = Color.Black,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 0.5.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RevolutionLayerRow(
+    layerNum: String,
+    title: String,
+    desc: String,
+    isActive: Boolean
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = if (isActive) DirectCyan.copy(alpha = 0.2f) else Color.DarkGray
+            ) {
+                Text(
+                    text = layerNum,
+                    color = if (isActive) DirectCyan else Color.Gray,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    color = TextPrimary,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = desc,
+                    color = TextSecondary,
+                    fontSize = 9.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(4.dp))
+
+        Icon(
+            imageVector = Icons.Default.CheckCircle,
+            contentDescription = null,
+            tint = if (isActive) XboxNeonGreen else Color.DarkGray,
+            modifier = Modifier.size(14.dp)
+        )
     }
 }
 
 @Composable
 private fun LiveIpVerifierCard(
     geoIp: GeoIpResult?,
+    smartDecision: SmartVpnDecision,
+    smartPhase: SmartVpnPhase,
     currentServer: ServerLocation,
     onRefreshIp: () -> Unit,
     onSwitchNextServer: () -> Unit
 ) {
-    val isJapanOrSupported = geoIp?.isXboxSupported == true
-    val statusColor = if (isJapanOrSupported) XboxNeonGreen else WarningAmber
+    val isSupported = smartDecision.isSupportedRegion
+    val statusColor = if (isSupported) DirectCyan else (if (smartDecision.needsVpn) XboxNeonGreen else DirectCyan)
     val allServers = VpnManager.getAllServers()
     val serverIndex = allServers.indexOfFirst { it.id == currentServer.id }.coerceAtLeast(0) + 1
 
@@ -231,7 +479,7 @@ private fun LiveIpVerifierCard(
             .clip(RoundedCornerShape(18.dp))
             .border(
                 1.dp,
-                if (isJapanOrSupported) XboxNeonGreen.copy(alpha = 0.35f) else WarningAmber.copy(alpha = 0.35f),
+                statusColor.copy(alpha = 0.35f),
                 RoundedCornerShape(18.dp)
             )
             .testTag("live_ip_verifier_card"),
@@ -247,6 +495,7 @@ private fun LiveIpVerifierCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
+                    modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -258,20 +507,24 @@ private fun LiveIpVerifierCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = if (isJapanOrSupported) Icons.Default.CheckCircle else Icons.Default.Warning,
+                            imageVector = if (isSupported) Icons.Default.CheckCircle else Icons.Default.Bolt,
                             contentDescription = null,
                             tint = statusColor,
                             modifier = Modifier.size(16.dp)
                         )
                     }
                     Text(
-                        text = "RADAR KIỂM ĐỊNH IP THỰC TẾ",
+                        text = "TRỢ LÝ VPN THÔNG MINH",
                         color = TextPrimary,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.8.sp
+                        letterSpacing = 0.5.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
+
+                Spacer(modifier = Modifier.width(6.dp))
 
                 Surface(
                     shape = RoundedCornerShape(8.dp),
@@ -279,10 +532,11 @@ private fun LiveIpVerifierCard(
                     border = androidx.compose.foundation.BorderStroke(1.dp, statusColor.copy(alpha = 0.3f))
                 ) {
                     Text(
-                        text = if (isJapanOrSupported) "HỢP LỆ XBOX • ${geoIp?.countryCode ?: "JP"}" else "CHƯA QUA NHẬT • ${geoIp?.countryCode ?: "VN"}",
+                        text = if (isSupported) "HỢP LỆ XBOX • ${smartDecision.userCountryCode}" else "CẦN SMART VPN • ${smartDecision.userCountryCode}",
                         color = statusColor,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                     )
                 }
@@ -298,13 +552,16 @@ private fun LiveIpVerifierCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "IP Hiện Tại:",
+                            text = "IP Người Chơi:",
                             color = TextSecondary,
                             fontSize = 11.sp
                         )
@@ -312,16 +569,22 @@ private fun LiveIpVerifierCard(
                             text = geoIp?.ip ?: "Đang quét...",
                             color = DirectCyan,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                     Text(
-                        text = "Vị trí: ${geoIp?.countryName ?: "Đang kiểm tra"} ${geoIp?.flagEmoji ?: ""} ${if (geoIp?.city?.isNotBlank() == true) "(${geoIp.city})" else ""}",
+                        text = "Vị trí: ${smartDecision.userCountryName} ${geoIp?.flagEmoji ?: "🇻🇳"}${if (geoIp?.city?.isNotBlank() == true) " (${geoIp.city})" else ""}",
                         color = TextPrimary,
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
+
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Surface(
                     shape = RoundedCornerShape(8.dp),
@@ -333,38 +596,158 @@ private fun LiveIpVerifierCard(
                         color = XboxNeonGreen,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
+                        maxLines = 1,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
+                }
+            }
+
+            // Smart Recommendation Banner
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                color = if (isSupported) DirectCyan.copy(alpha = 0.12f) else XboxNeonGreen.copy(alpha = 0.12f),
+                border = androidx.compose.foundation.BorderStroke(
+                    0.5.dp,
+                    if (isSupported) DirectCyan.copy(alpha = 0.3f) else XboxNeonGreen.copy(alpha = 0.3f)
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = if (isSupported) DirectCyan else XboxNeonGreen,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = smartDecision.message,
+                        color = TextPrimary,
+                        fontSize = 11.sp,
+                        lineHeight = 16.sp
+                    )
+                }
+            }
+
+            // Visual Lifecycle Workflow Indicator: Stage 1 (Bật) -> Stage 2 (Tắt)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color.Black.copy(alpha = 0.4f))
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val isStage1Active = smartPhase == SmartVpnPhase.BYPASS_ACTIVE
+                val isStage2Active = smartPhase == SmartVpnPhase.DIRECT_GAMING || smartPhase == SmartVpnPhase.DIRECT_SUPPORTED_REGION
+
+                // Step 1: Open Game -> Auto ON
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (isStage1Active) JapanRed.copy(alpha = 0.25f) else Color.Transparent,
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isStage1Active) JapanRed else Color.DarkGray
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "1. MỞ GAME 🚀",
+                            color = if (isStage1Active) JapanRed else TextSecondary,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = if (smartDecision.needsVpn) "BẬT VPN 🇯🇵" else "DIRECT ⚡",
+                            color = if (isStage1Active) Color.White else Color.Gray,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                Text(
+                    text = "➔",
+                    color = XboxNeonGreen,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 6.dp)
+                )
+
+                // Step 2: Stream Connect -> Auto OFF
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (isStage2Active) DirectCyan.copy(alpha = 0.25f) else Color.Transparent,
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isStage2Active) DirectCyan else Color.DarkGray
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "2. VÀO TRẬN 🎮",
+                            color = if (isStage2Active) DirectCyan else TextSecondary,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "TẮT VPN ⚡ (0ms lag)",
+                            color = if (isStage2Active) Color.White else Color.Gray,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
 
             // Dual action buttons: Change backup server + Refresh IP
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Button(
                     onClick = onSwitchNextServer,
                     modifier = Modifier
-                        .weight(1.3f)
-                        .height(40.dp),
+                        .weight(1.2f)
+                        .defaultMinSize(minHeight = 40.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = XboxGreen),
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Icon(Icons.Default.Sync, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
-                        Text("Đổi Server Dự Phòng 🔄", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            "Đổi Server Dự Phòng",
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
 
                 Button(
                     onClick = onRefreshIp,
                     modifier = Modifier
-                        .weight(0.9f)
-                        .height(40.dp),
+                        .weight(0.8f)
+                        .defaultMinSize(minHeight = 40.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Black.copy(alpha = 0.45f)),
                     shape = RoundedCornerShape(10.dp)
                 ) {
@@ -373,7 +756,14 @@ private fun LiveIpVerifierCard(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Icon(Icons.Default.Refresh, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(15.dp))
-                        Text("Quét Lại", color = TextPrimary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "Quét Lại IP",
+                            color = TextPrimary,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
             }
@@ -465,8 +855,9 @@ private fun LivePulseStatusCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
+                    modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         if (vpnState.mode != NetworkMode.DISCONNECTED) {
@@ -486,24 +877,31 @@ private fun LivePulseStatusCard(
                         )
                     }
 
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = when (vpnState.mode) {
-                                NetworkMode.VPN_JAPAN -> "VPN Nhật Bản Đang Bật 🇯🇵"
-                                NetworkMode.DIRECT_NETWORK -> "Mạng Trực Tiếp (Direct ISP) ⚡"
-                                NetworkMode.DISCONNECTED -> "Sẵn Sàng Chiến Game"
+                            text = when (vpnState.smartVpnPhase) {
+                                SmartVpnPhase.BYPASS_ACTIVE -> "Giai đoạn 1: Vượt Rào (VPN Bật) 🇯🇵"
+                                SmartVpnPhase.DIRECT_GAMING -> "Giai đoạn 2: Vào Trận (Direct ISP) ⚡"
+                                SmartVpnPhase.DIRECT_SUPPORTED_REGION -> "Mạng Trực Tiếp (Vùng Đã Hỗ Trợ) ⚡"
+                                SmartVpnPhase.IDLE -> if (vpnState.mode == NetworkMode.VPN_JAPAN) "VPN Nhật Bản Đang Bật 🇯🇵" else "Smart VPN Sẵn Sàng 🤖"
                             },
                             color = TextPrimary,
                             fontWeight = FontWeight.ExtraBold,
-                            fontSize = 15.sp
+                            fontSize = 14.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = vpnState.statusMessage,
                             color = TextSecondary,
-                            fontSize = 11.sp
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.width(6.dp))
 
                 Surface(
                     shape = RoundedCornerShape(8.dp),
@@ -522,10 +920,11 @@ private fun LivePulseStatusCard(
                     )
                 ) {
                     Text(
-                        text = when (vpnState.mode) {
-                            NetworkMode.DIRECT_NETWORK -> "⚡ ZERO LAG"
-                            NetworkMode.VPN_JAPAN -> "✓ VƯỢT RÀO OK"
-                            NetworkMode.DISCONNECTED -> "AUTO-BYPASS"
+                        text = when (vpnState.smartVpnPhase) {
+                            SmartVpnPhase.DIRECT_GAMING -> "⚡ ZERO LAG"
+                            SmartVpnPhase.BYPASS_ACTIVE -> "✓ VƯỢT RÀO OK"
+                            SmartVpnPhase.DIRECT_SUPPORTED_REGION -> "⚡ DIRECT"
+                            SmartVpnPhase.IDLE -> "AUTO-SMART"
                         },
                         color = when (vpnState.mode) {
                             NetworkMode.DIRECT_NETWORK -> DirectCyan
@@ -534,6 +933,7 @@ private fun LivePulseStatusCard(
                         },
                         fontSize = 10.sp,
                         fontWeight = FontWeight.ExtraBold,
+                        maxLines = 1,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
@@ -546,8 +946,9 @@ private fun LivePulseStatusCard(
                     onClick = onOpenXboxCloud,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp)
+                        .defaultMinSize(minHeight = 52.dp)
                         .testTag("button_open_xbox_cloud"),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = XboxGreen
                     ),
@@ -555,7 +956,8 @@ private fun LivePulseStatusCard(
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Box(
                             modifier = Modifier
@@ -571,13 +973,24 @@ private fun LivePulseStatusCard(
                                 modifier = Modifier.size(20.dp)
                             )
                         }
-                        Text(
-                            text = "CHƠI XBOX CLOUD NGAY",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.White,
-                            letterSpacing = 0.5.sp
-                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (vpnState.smartDecision.needsVpn) "CHƠI XBOX CLOUD (SMART VPN)" else "CHƠI XBOX CLOUD (MẠNG TRỰC TIẾP)",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White,
+                                letterSpacing = 0.5.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = if (vpnState.smartDecision.needsVpn) "Tự động: Bật lúc mở ➔ Tắt khi vào trận" else "IP đã hợp lệ (${vpnState.smartDecision.userCountryName}) • 0ms VPN",
+                                fontSize = 10.sp,
+                                color = Color.White.copy(alpha = 0.85f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
                 }
 
@@ -588,8 +1001,9 @@ private fun LivePulseStatusCard(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(44.dp)
+                        .defaultMinSize(minHeight = 42.dp)
                         .testTag("button_toggle_vpn"),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (vpnState.mode == NetworkMode.VPN_JAPAN) Color(0xFF3B1E22) else Color.Black.copy(alpha = 0.4f)
                     ),
@@ -617,10 +1031,12 @@ private fun LivePulseStatusCard(
                                 modifier = Modifier.size(16.dp)
                             )
                             Text(
-                                text = if (vpnState.mode == NetworkMode.VPN_JAPAN) "Tắt VPN (Chuyển Direct Mạng Nhà)" else "Bật VPN Nhật Bản Thủ Công",
+                                text = if (vpnState.mode == NetworkMode.VPN_JAPAN) "Tắt VPN (Chuyển Mạng Trực Tiếp)" else "Bật VPN Nhật Bản Thủ Công",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (vpnState.mode == NetworkMode.VPN_JAPAN) JapanRed else TextPrimary
+                                color = if (vpnState.mode == NetworkMode.VPN_JAPAN) JapanRed else TextPrimary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -654,12 +1070,16 @@ private fun EngineTabItem(
                 text = label,
                 color = if (selected) Color.White else TextSecondary,
                 fontSize = 11.sp,
-                fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Medium
+                fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = sub,
                 color = if (selected) Color.White.copy(alpha = 0.9f) else Color.Gray,
-                fontSize = 9.sp
+                fontSize = 9.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -680,6 +1100,7 @@ private fun HardwareControllerBanner(gamepadStatus: GamepadStatus) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
@@ -697,20 +1118,26 @@ private fun HardwareControllerBanner(gamepadStatus: GamepadStatus) {
                         modifier = Modifier.size(18.dp)
                     )
                 }
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = if (gamepadStatus.hasPhysicalController) "Tay Cầm: ${gamepadStatus.controllerName}" else "Tay Cầm Ảo / Cảm Ứng Sẵn Sàng",
                         color = TextPrimary,
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = if (gamepadStatus.hasPhysicalController) "Kết nối Bluetooth/USB ổn định • Không delay" else "Hỗ trợ nút bấm ảo trên màn hình & vuốt chạm mượt mà",
                         color = TextSecondary,
-                        fontSize = 10.sp
+                        fontSize = 10.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.width(8.dp))
 
             Box(
                 modifier = Modifier

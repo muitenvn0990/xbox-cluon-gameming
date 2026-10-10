@@ -47,26 +47,112 @@ object VpnManager {
         ipCheckJob?.cancel()
         ipCheckJob = scope.launch(Dispatchers.IO) {
             val result = GeoIpDetector.checkCurrentIp()
-            if (result != null) {
-                _state.value = _state.value.copy(detectedGeoIp = result)
-            }
+            updateSmartDecision(result)
         }
+    }
+
+    fun updateSmartDecision(geo: GeoIpResult?) {
+        val currentGeo = geo ?: _state.value.detectedGeoIp
+        if (currentGeo == null) {
+            val pendingDecision = SmartVpnDecision(
+                checked = false,
+                needsVpn = true,
+                message = "Đang kiểm tra IP người chơi...",
+                actionSummary = "Tự động phân tích IP..."
+            )
+            _state.value = _state.value.copy(smartDecision = pendingDecision)
+            return
+        }
+
+        val isSupported = currentGeo.isXboxSupported
+        val needsVpn = !isSupported
+        val decision = SmartVpnDecision(
+            checked = true,
+            needsVpn = needsVpn,
+            userCountryCode = currentGeo.countryCode,
+            userCountryName = currentGeo.countryName,
+            isSupportedRegion = isSupported,
+            message = if (needsVpn) {
+                "⚠️ Phát hiện IP ${currentGeo.ip} tại ${currentGeo.countryName} ${currentGeo.flagEmoji} (Chưa hỗ trợ xCloud). Smart VPN sẽ TỰ ĐỘNG BẬT khi mở game & TỰ ĐỘNG TẮT khi vào trận!"
+            } else {
+                "✅ Phát hiện IP ${currentGeo.ip} tại ${currentGeo.countryName} ${currentGeo.flagEmoji} ĐÃ HỖ TRỢ xCloud. KHÔNG CẦN BẬT VPN! Luôn giữ Direct ISP để đạt Ping thấp nhất."
+            },
+            actionSummary = if (needsVpn) {
+                "Tự động: BẬT lúc mở game ➔ TẮT khi vào trận"
+            } else {
+                "Tự động: Giữ Direct ISP (0ms lag VPN)"
+            }
+        )
+
+        val nextPhase = when {
+            isSupported -> SmartVpnPhase.DIRECT_SUPPORTED_REGION
+            _state.value.mode == NetworkMode.VPN_JAPAN -> SmartVpnPhase.BYPASS_ACTIVE
+            _state.value.mode == NetworkMode.DIRECT_NETWORK -> SmartVpnPhase.DIRECT_GAMING
+            else -> SmartVpnPhase.IDLE
+        }
+
+        _state.value = _state.value.copy(
+            detectedGeoIp = currentGeo,
+            smartDecision = decision,
+            smartVpnPhase = nextPhase,
+            statusMessage = if (isSupported) {
+                "✅ IP hợp lệ: ${currentGeo.countryName} ${currentGeo.flagEmoji} • Không cần VPN (Mạng Trực Tiếp)"
+            } else {
+                "🤖 Smart VPN sẵn sàng: Tự động Bật/Tắt cho IP ${currentGeo.countryName} ${currentGeo.flagEmoji}"
+            }
+        )
+    }
+
+    /**
+     * Determines whether the player actually needs VPN to pass Xbox region check
+     */
+    fun needsVpnToPlay(): Boolean {
+        val geo = _state.value.detectedGeoIp
+        return if (geo != null) {
+            !geo.isXboxSupported
+        } else {
+            _state.value.smartDecision.needsVpn
+        }
+    }
+
+    /**
+     * Smart VPN Lifecycle: Auto Turn ON when launching game or opening catalog
+     */
+    fun autoTurnOnForLaunch(context: Context) {
+        if (!needsVpnToPlay()) {
+            ensureDirectNetwork()
+            return
+        }
+        if (_state.value.mode != NetworkMode.VPN_JAPAN) {
+            connect(context, _state.value.currentServer)
+            _state.value = _state.value.copy(
+                mode = NetworkMode.VPN_JAPAN,
+                smartVpnPhase = SmartVpnPhase.BYPASS_ACTIVE,
+                statusMessage = "🤖 Smart VPN: Đã TỰ ĐỘNG BẬT để vượt rào mở game..."
+            )
+        }
+    }
+
+    /**
+     * Smart VPN Lifecycle: Keep Direct Network if user is in supported region
+     */
+    fun ensureDirectNetwork() {
+        clearWebViewProxy()
+        _state.value = _state.value.copy(
+            mode = NetworkMode.DIRECT_NETWORK,
+            smartVpnPhase = SmartVpnPhase.DIRECT_SUPPORTED_REGION,
+            statusMessage = "⚡ Smart VPN: Vị trí hợp lệ, giữ Mạng Trực Tiếp (0ms VPN lag)"
+        )
+    }
+
+    fun setSmartVpnPhase(phase: SmartVpnPhase) {
+        _state.value = _state.value.copy(smartVpnPhase = phase)
     }
 
     fun onWebViewIpDetected(ip: String, countryCode: String, countryName: String? = null, city: String? = null) {
         GeoIpDetector.onWebViewReported(ip, countryCode, countryName, city)
         val currentGeo = GeoIpDetector.currentGeoIp.value
-        if (currentGeo != null) {
-            val isTargetCountry = currentGeo.countryCode.equals(_state.value.currentServer.countryCode, ignoreCase = true)
-            _state.value = _state.value.copy(
-                detectedGeoIp = currentGeo,
-                statusMessage = if (isTargetCountry || currentGeo.isXboxSupported) {
-                    "✅ IP: ${currentGeo.ip} • ${currentGeo.countryName} ${currentGeo.flagEmoji} (Đã xác minh hợp lệ Xbox!)"
-                } else {
-                    "⚠️ IP: ${currentGeo.countryName} • Vui lòng chuyển sang máy chủ dự phòng Nhật Bản"
-                }
-            )
-        }
+        updateSmartDecision(currentGeo)
     }
 
     fun onRegionBypassed(info: String) {
@@ -84,6 +170,7 @@ object VpnManager {
         _state.value = _state.value.copy(
             isBypassActiveInBrowser = true,
             detectedGeoIp = spoofGeo,
+            smartVpnPhase = SmartVpnPhase.BYPASS_ACTIVE,
             statusMessage = "✅ Đã vượt rào Xbox thành công! Khu vực: ${currentServer.name} ${currentServer.flag}"
         )
     }
@@ -189,6 +276,7 @@ object VpnManager {
             mode = NetworkMode.DISCONNECTED,
             isConnecting = false,
             isBypassActiveInBrowser = false,
+            smartVpnPhase = if (needsVpnToPlay()) SmartVpnPhase.IDLE else SmartVpnPhase.DIRECT_SUPPORTED_REGION,
             statusMessage = "Đã ngắt kết nối"
         )
         checkCurrentIp()
@@ -273,7 +361,8 @@ object VpnManager {
             mode = NetworkMode.DIRECT_NETWORK,
             isConnecting = false,
             autoBypassTriggered = true,
-            statusMessage = "⚡ Đã chuyển sang mạng trực tiếp ($triggerSource). Giảm ping tối đa!"
+            smartVpnPhase = SmartVpnPhase.DIRECT_GAMING,
+            statusMessage = "⚡ Smart VPN: Đã TỰ ĐỘNG TẮT VPN ($triggerSource)! Đang truyền trực tiếp qua mạng ISP (Ping thấp nhất)."
         )
 
         scope.launch(Dispatchers.IO) {

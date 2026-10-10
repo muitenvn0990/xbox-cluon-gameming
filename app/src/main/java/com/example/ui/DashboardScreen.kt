@@ -24,13 +24,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Gamepad
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.ui.text.style.TextOverflow
+import com.example.ui.components.HowToUseGuideDialog
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -127,7 +130,7 @@ fun DashboardScreen(
                 color = XboxSurface.copy(alpha = 0.95f),
                 border = androidx.compose.foundation.BorderStroke(0.5.dp, XboxCardBorder)
             ) {
-                CenterAlignedTopAppBar(
+                TopAppBar(
                     title = {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -170,36 +173,69 @@ fun DashboardScreen(
                         }
                     },
                     actions = {
-                        Surface(
-                            modifier = Modifier
-                                .padding(end = 12.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .border(1.dp, XboxNeonGreen.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
-                                .clickable { currentTab = DashboardTab.SETTINGS }
-                                .testTag("topbar_language_button"),
-                            color = XboxSurfaceVariant.copy(alpha = 0.9f)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.padding(end = 12.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(5.dp)
+                            Surface(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .border(1.dp, DirectCyan.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
+                                    .clickable { currentTab = DashboardTab.SETTINGS }
+                                    .testTag("topbar_revolution_badge"),
+                                color = DirectCyan.copy(alpha = 0.12f)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Language,
-                                    contentDescription = "Ngôn ngữ",
-                                    tint = XboxNeonGreen,
-                                    modifier = Modifier.size(15.dp)
-                                )
-                                Text(
-                                    text = config.getEffectiveLocale(),
-                                    color = TextPrimary,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Speed,
+                                        contentDescription = "Hệ thống v1.0",
+                                        tint = DirectCyan,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Text(
+                                        text = "V1.0",
+                                        color = DirectCyan,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                }
+                            }
+
+                            Surface(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .border(1.dp, XboxNeonGreen.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
+                                    .clickable { currentTab = DashboardTab.SETTINGS }
+                                    .testTag("topbar_language_button"),
+                                color = XboxSurfaceVariant.copy(alpha = 0.9f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Language,
+                                        contentDescription = "Ngôn ngữ",
+                                        tint = XboxNeonGreen,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Text(
+                                        text = config.getEffectiveLocale(),
+                                        color = TextPrimary,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
                     },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent
                     )
                 )
@@ -319,7 +355,11 @@ fun DashboardScreen(
                         SettingsScreen(
                             config = config,
                             vpnState = vpnState,
-                            onClearCookies = {}
+                            onClearCookies = {
+                                android.webkit.CookieManager.getInstance().removeAllCookies(null)
+                                android.webkit.WebStorage.getInstance().deleteAllData()
+                                android.widget.Toast.makeText(context, "Đã xóa toàn bộ Cookie & Dữ liệu Xbox!", android.widget.Toast.LENGTH_SHORT).show()
+                            }
                         )
                     }
                 }

@@ -53,8 +53,13 @@ class StreamController(private val context: Context) {
         val config = SettingsRepository.config.value
         val vpnState = VpnManager.state.value
 
-        if (config.autoBypassEnabled && vpnState.mode == NetworkMode.VPN_JAPAN) {
-            scheduleAutoBypass(config.autoBypassDelaySeconds, "Launch sequence detected")
+        if (config.smartVpnEnabled) {
+            if (VpnManager.needsVpnToPlay() && vpnState.mode != NetworkMode.VPN_JAPAN) {
+                VpnManager.autoTurnOnForLaunch(context)
+                showTemporaryBanner("🤖 Smart VPN: Tự động BẬT VPN Nhật Bản để vượt rào xác thực game...", BannerType.INFO, 3000)
+            } else if (!VpnManager.needsVpnToPlay()) {
+                VpnManager.ensureDirectNetwork()
+            }
         }
     }
 
@@ -69,8 +74,8 @@ class StreamController(private val context: Context) {
         val config = SettingsRepository.config.value
         val vpnState = VpnManager.state.value
 
-        if (config.autoBypassEnabled && vpnState.mode == NetworkMode.VPN_JAPAN && !_uiState.value.autoBypassTriggered) {
-            scheduleAutoBypass(2, "WebRTC stream established")
+        if ((config.smartVpnEnabled || config.autoBypassEnabled) && vpnState.mode == NetworkMode.VPN_JAPAN && !_uiState.value.autoBypassTriggered) {
+            scheduleAutoBypass(config.autoBypassDelaySeconds, "WebRTC stream kết nối thành công")
         }
     }
 
@@ -96,9 +101,9 @@ class StreamController(private val context: Context) {
             )
 
             val config = SettingsRepository.config.value
-            if (config.autoReconnectOnMenu && VpnManager.state.value.mode == NetworkMode.DIRECT_NETWORK) {
-                showTemporaryBanner("🎮 Exited game. Re-arming Japan VPN for game browser...", BannerType.INFO, 4000)
-                VpnManager.connect(context)
+            if ((config.smartVpnEnabled || config.autoReconnectOnMenu) && VpnManager.needsVpnToPlay()) {
+                showTemporaryBanner("🎮 Đã thoát trận: Smart VPN tự động BẬT lại VPN để duyệt thư viện...", BannerType.INFO, 3500)
+                VpnManager.autoTurnOnForLaunch(context)
             }
         }
     }
@@ -114,7 +119,7 @@ class StreamController(private val context: Context) {
 
     fun forceSwitchToDirectNetwork() {
         cancelAutoBypass()
-        executeBypass("Manual bypass button")
+        executeBypass("Chuyển mạng thủ công")
     }
 
     private fun scheduleAutoBypass(delaySeconds: Int, triggerReason: String) {
@@ -124,7 +129,7 @@ class StreamController(private val context: Context) {
                 _uiState.value = _uiState.value.copy(
                     countdownRemainingSeconds = sec,
                     showBanner = true,
-                    bannerMessage = "⚡ Switching to Direct Network in ${sec}s... (Tap to Cancel)",
+                    bannerMessage = "⚡ Smart VPN: Tự động TẮT VPN chuyển Mạng Nhà sau ${sec}s... (Chạm để Hủy)",
                     bannerType = BannerType.COUNTDOWN
                 )
                 delay(1000)
@@ -139,16 +144,16 @@ class StreamController(private val context: Context) {
             countdownRemainingSeconds = null,
             autoBypassTriggered = true,
             showBanner = true,
-            bannerMessage = "⚡ Direct Network Active! Lowest ping enabled without reload.",
+            bannerMessage = "⚡ Smart VPN: Đã TỰ ĐỘNG TẮT VPN khi vào game! Mạng Trực Tiếp Active (Ping thấp nhất).",
             bannerType = BannerType.SUCCESS
         )
 
         vibrateFeedback()
         VpnManager.switchToDirectNetwork(context, reason)
 
-        // Dismiss banner after 4 seconds
+        // Dismiss banner after 4.5 seconds
         scope.launch {
-            delay(4000)
+            delay(4500)
             _uiState.value = _uiState.value.copy(showBanner = false)
         }
     }

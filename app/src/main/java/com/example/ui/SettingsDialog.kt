@@ -241,6 +241,40 @@ fun SettingsDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // Smart VPN Toggle
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "VPN Thông Minh (Auto On/Off)",
+                            color = TextPrimary,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Tự động phân tích IP người chơi: Bật khi mở game, Tắt khi vào trận",
+                            color = TextSecondary,
+                            fontSize = 11.sp
+                        )
+                    }
+                    Switch(
+                        checked = config.smartVpnEnabled,
+                        onCheckedChange = { SettingsRepository.updateSmartVpnEnabled(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.Black,
+                            checkedTrackColor = XboxNeonGreen
+                        ),
+                        modifier = Modifier.testTag("switch_smart_vpn")
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
                 // Auto Bypass Toggle
                 Row(
                     modifier = Modifier

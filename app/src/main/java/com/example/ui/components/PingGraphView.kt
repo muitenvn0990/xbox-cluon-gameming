@@ -140,7 +140,8 @@ fun PingVisualizerCard(
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color.Black.copy(alpha = 0.25f))
             ) {
-                val width = size.width
+                val paddingPx = 8.dp.toPx()
+                val effectiveWidth = (size.width - 2 * paddingPx).coerceAtLeast(1f)
                 val height = size.height
                 if (sampleData.size < 2) return@Canvas
 
@@ -148,14 +149,14 @@ fun PingVisualizerCard(
                 val minVal = (sampleData.minOrNull() ?: 20).coerceAtMost(20).toFloat()
                 val range = (maxVal - minVal).coerceAtLeast(1f)
 
-                val stepX = width / (sampleData.size - 1)
+                val stepX = effectiveWidth / (sampleData.size - 1)
                 val path = Path()
                 val fillPath = Path()
 
                 sampleData.forEachIndexed { index, value ->
-                    val x = index * stepX
+                    val x = paddingPx + index * stepX
                     val normalizedY = (value - minVal) / range
-                    val y = height - (normalizedY * (height * 0.75f) + height * 0.1f)
+                    val y = height - (normalizedY * (height * 0.7f) + height * 0.15f)
 
                     if (index == 0) {
                         path.moveTo(x, y)
@@ -167,7 +168,8 @@ fun PingVisualizerCard(
                     }
                 }
 
-                fillPath.lineTo(width, height)
+                val lastX = paddingPx + effectiveWidth
+                fillPath.lineTo(lastX, height)
                 fillPath.close()
 
                 // Draw gradient fill
@@ -187,10 +189,9 @@ fun PingVisualizerCard(
                     style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
                 )
 
-                // Highlight latest point
-                val lastX = width
+                // Highlight latest point safely without edge clipping
                 val lastVal = sampleData.last()
-                val lastY = height - (((lastVal - minVal) / range) * (height * 0.75f) + height * 0.1f)
+                val lastY = height - (((lastVal - minVal) / range) * (height * 0.7f) + height * 0.15f)
                 drawCircle(color = strokeColor, radius = 5.dp.toPx(), center = Offset(lastX, lastY))
                 drawCircle(color = Color.White, radius = 2.dp.toPx(), center = Offset(lastX, lastY))
             }

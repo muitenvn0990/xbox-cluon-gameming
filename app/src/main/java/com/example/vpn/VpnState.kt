@@ -363,6 +363,50 @@ val DEFAULT_SERVERS = listOf(
     )
 )
 
+enum class SmartVpnPhase {
+    IDLE,                      // Trạng thái chờ / kiểm tra IP
+    BYPASS_ACTIVE,             // Giai đoạn 1: Đang BẬT VPN/Bypass để vượt rào vùng (duyệt catalog, mở game)
+    DIRECT_GAMING,             // Giai đoạn 2: Đã TỰ ĐỘNG TẮT VPN khi vào trận (Mạng Direct ISP active - 0ms phụ trợ)
+    DIRECT_SUPPORTED_REGION    // Người chơi ở sẵn khu vực hỗ trợ (Mỹ, Nhật, Singapore...), không cần bật VPN
+}
+
+data class SmartVpnDecision(
+    val checked: Boolean = false,
+    val needsVpn: Boolean = true,
+    val userCountryCode: String = "VN",
+    val userCountryName: String = "Việt Nam",
+    val isSupportedRegion: Boolean = false,
+    val message: String = "Đang kiểm tra IP người chơi...",
+    val actionSummary: String = "BẬT lúc mở game ➔ TẮT khi vào trận"
+)
+
+data class StreamTelemetry(
+    val isStreaming: Boolean = false,
+    val fps: Int = 60,
+    val bitrateMbps: Float = 14.2f,
+    val rttMs: Int = 28,
+    val jitterMs: Int = 2,
+    val packetsLostPercent: Float = 0.0f,
+    val framesDropped: Int = 0,
+    val resolution: String = "1920x1080 (FHD)",
+    val codec: String = "H.264 High Profile",
+    val audioCodec: String = "Opus Stereo 48kHz",
+    val qualityScore: Float = 4.9f
+)
+
+data class SystemBenchmarkResult(
+    val isRunning: Boolean = false,
+    val completed: Boolean = false,
+    val dnsResolveMs: Int = 14,
+    val azureTokyoPingMs: Int = 68,
+    val directIspPingMs: Int = 26,
+    val jitterMs: Int = 3,
+    val packetLossPercent: Float = 0.0f,
+    val hardwareDecoderOk: Boolean = true,
+    val systemScore: Int = 98,
+    val summary: String = "Hệ thống tối ưu hoàn hảo • Đạt chuẩn 1080p60 Zero Lag"
+)
+
 data class VpnConnectionState(
     val mode: NetworkMode = NetworkMode.DISCONNECTED,
     val engine: VpnEngine = VpnEngine.PROXY_TUNNEL,
@@ -377,5 +421,9 @@ data class VpnConnectionState(
     val detectedGeoIp: GeoIpResult? = null,
     val isBypassActiveInBrowser: Boolean = false,
     val customServers: List<ServerLocation> = emptyList(),
-    val autoSwitchedBackupCount: Int = 0
+    val autoSwitchedBackupCount: Int = 0,
+    val smartVpnPhase: SmartVpnPhase = SmartVpnPhase.IDLE,
+    val smartDecision: SmartVpnDecision = SmartVpnDecision(),
+    val telemetry: StreamTelemetry = StreamTelemetry(),
+    val benchmark: SystemBenchmarkResult = SystemBenchmarkResult()
 )

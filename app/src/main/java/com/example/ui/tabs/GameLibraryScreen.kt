@@ -210,7 +210,7 @@ fun GameLibraryScreen(
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
-                    contentPadding = PaddingValues(bottom = 85.dp),
+                    contentPadding = PaddingValues(bottom = 20.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.weight(1f)
